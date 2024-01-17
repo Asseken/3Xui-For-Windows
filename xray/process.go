@@ -231,9 +231,32 @@ func (p *process) Start() (err error) {
 	return nil
 }
 
+// func (p *process) Stop() error {
+// 	if !p.IsRunning() {
+// 		return errors.New("xray is not running")
+// 	}
+// 	return p.cmd.Process.Signal(syscall.SIGTERM)
+// }
 func (p *process) Stop() error {
 	if !p.IsRunning() {
 		return errors.New("xray is not running")
 	}
-	return p.cmd.Process.Signal(syscall.SIGTERM)
+
+	// 尝试发送 SIGTERM 信号
+	err := p.cmd.Process.Signal(syscall.SIGTERM)
+	if err != nil {
+		// 如果发送 SIGTERM 失败，尝试直接强制终止进程
+		err = p.cmd.Process.Kill()
+		if err != nil {
+			return fmt.Errorf("failed to stop xray: %v", err)
+		}
+	}
+
+	// 等待进程退出
+	_, err = p.cmd.Process.Wait()
+	if err != nil {
+		return fmt.Errorf("error waiting for xray to exit: %v", err)
+	}
+
+	return nil
 }
