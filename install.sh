@@ -27,7 +27,8 @@ arch3xui() {
     case "$(uname -m)" in
     x86_64 | x64 | amd64) echo 'amd64' ;;
     armv8* | armv8 | arm64 | aarch64) echo 'arm64' ;;
-    armv7* | armv7 | arm | arm32 ) echo 'arm32' ;;
+    armv7* | armv7 | arm) echo 'armv7' ;;
+    armv6* | armv6 | arm) echo 'armv6' ;;
     *) echo -e "${green}Unsupported CPU architecture! ${plain}" && rm -f install.sh && exit 1 ;;
     esac
 }
@@ -42,17 +43,27 @@ if [[ "${release}" == "centos" ]]; then
     fi
 elif [[ "${release}" == "ubuntu" ]]; then
     if [[ ${os_version} -lt 20 ]]; then
-        echo -e "${red}please use Ubuntu 20 or higher version!${plain}\n" && exit 1
+        echo -e "${red} Please use Ubuntu 20 or higher version!${plain}\n" && exit 1
     fi
 
 elif [[ "${release}" == "fedora" ]]; then
     if [[ ${os_version} -lt 36 ]]; then
-        echo -e "${red}please use Fedora 36 or higher version!${plain}\n" && exit 1
+        echo -e "${red} Please use Fedora 36 or higher version!${plain}\n" && exit 1
     fi
 
 elif [[ "${release}" == "debian" ]]; then
-    if [[ ${os_version} -lt 10 ]]; then
-        echo -e "${red} Please use Debian 10 or higher ${plain}\n" && exit 1
+    if [[ ${os_version} -lt 11 ]]; then
+        echo -e "${red} Please use Debian 11 or higher ${plain}\n" && exit 1
+    fi
+
+elif [[ "${release}" == "almalinux" ]]; then
+    if [[ ${os_version} -lt 9 ]]; then
+        echo -e "${red} Please use AlmaLinux 9 or higher ${plain}\n" && exit 1
+    fi
+
+elif [[ "${release}" == "rocky" ]]; then
+    if [[ ${os_version} -lt 9 ]]; then
+        echo -e "${red} Please use RockyLinux 9 or higher ${plain}\n" && exit 1
     fi
 elif [[ "${release}" == "arch" ]]; then
     echo "Your OS is ArchLinux"
@@ -67,14 +78,14 @@ fi
 
 install_base() {
     case "${release}" in
-        centos|fedora)
+        centos|fedora|almalinux|rocky)
             yum -y update && yum install -y -q wget curl tar
             ;;
         arch|manjaro)
             pacman -Syu && pacman -Syu --noconfirm wget curl tar
             ;;
         *)
-            apt-get update && apt-get upgrade -y && apt install -y -q wget curl tar
+            apt-get update && apt install -y -q wget curl tar
             ;;
     esac
 }
@@ -133,7 +144,7 @@ install_x-ui() {
     else
         last_version=$1
         url="https://github.com/MHSanaei/3x-ui/releases/download/${last_version}/x-ui-linux-$(arch3xui).tar.gz"
-        echo -e "Begining to install x-ui $1"
+        echo -e "Beginning to install x-ui $1"
         wget -N --no-check-certificate -O /usr/local/x-ui-linux-$(arch3xui).tar.gz ${url}
         if [[ $? -ne 0 ]]; then
             echo -e "${red}Download x-ui $1 failed,please check the version exists ${plain}"

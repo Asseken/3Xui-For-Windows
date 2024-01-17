@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"embed"
+	"github.com/robfig/cron/v3"
 	"html/template"
 	"io"
 	"io/fs"
@@ -27,7 +28,6 @@ import (
 	"github.com/Calidity/gin-sessions/cookie"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"github.com/robfig/cron/v3"
 )
 
 ////go:embed assets/*
@@ -38,7 +38,7 @@ import (
 //注释取消embed，不让二进制程序把html文件夹和assets文件夹下的文件包含在内
 
 //go:embed translation/*
-var i18nFS embed.FS //把翻译文件包含在内
+var i18nFS embed.FS
 
 var startTime = time.Now()
 
@@ -96,24 +96,23 @@ type Server struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	wwwDir string // 存放嵌入文件的目录路径
+	webDir string // 存放嵌入文件的目录路径
 }
 
 func NewServer() *Server {
 	ctx, cancel := context.WithCancel(context.Background())
-	wwwDir := "/etc/www" // 修改为嵌入文件存放的目录路径
+	webDir := "/etc/www" // 修改为嵌入文件存放的目录路径
 	return &Server{
 		ctx:    ctx,
 		cancel: cancel,
-		wwwDir: wwwDir, //声明
+		webDir: webDir, //声明
 	}
 }
 
-// 获取html
 func (s *Server) getHtmlFiles() ([]string, error) {
 	files := make([]string, 0)
 	//dir, _ := os.Getwd() //原3x-ui的
-	err := filepath.WalkDir(s.wwwDir, func(path string, d fs.DirEntry, err error) error { //新的实现方法
+	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //新的实现方法
 		//err := fs.WalkDir(os.DirFS(dir), "web/html", func(path string, d fs.DirEntry, err error) error { //原3x-ui的方法
 		if err != nil {
 			return err
@@ -130,10 +129,9 @@ func (s *Server) getHtmlFiles() ([]string, error) {
 	return files, nil
 }
 
-// 获取模板
 func (s *Server) getHtmlTemplate(funcMap template.FuncMap) (*template.Template, error) {
 	t := template.New("").Funcs(funcMap)
-	err := filepath.WalkDir(s.wwwDir, func(path string, d fs.DirEntry, err error) error { //新的方法
+	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //新的方法
 		//err := fs.WalkDir(htmlFS, "html", func(path string, d fs.DirEntry, err error) error { //原3x-ui的方法
 		if err != nil {
 			return err
@@ -213,7 +211,7 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	engine.FuncMap["i18n"] = i18nWebFunc
 	engine.Use(locale.LocalizerMiddleware())
 
-	// 设置静态文件和html模板
+	// set static files and template
 	if config.IsDebug() {
 		// for development
 		files, err := s.getHtmlFiles()
@@ -221,7 +219,7 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 			return nil, err
 		}
 		engine.LoadHTMLFiles(files...)
-		engine.Static("/assets", filepath.Join(s.wwwDir, "assets")) //新的方法
+		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //新的方法
 		//engine.StaticFS(basePath+"assets", http.FS(os.DirFS("web/assets"))) //原3x-ui的方法
 	} else {
 		// for production
@@ -230,7 +228,7 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 			return nil, err
 		}
 		engine.SetHTMLTemplate(template)
-		engine.Static("/assets", filepath.Join(s.wwwDir, "assets")) //新的方法
+		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //新的方法
 		//engine.StaticFS(basePath+"assets", http.FS(&wrapAssetsFS{FS: assetsFS})) //原3x-ui的方法
 	}
 
@@ -252,11 +250,11 @@ func (s *Server) startTask() {
 	if err != nil {
 		logger.Warning("start xray failed:", err)
 	}
-	// Check whether xray is running every 30 seconds
-	s.cron.AddJob("@every 30s", job.NewCheckXrayRunningJob())
+	// Check whether xray is running every second
+	s.cron.AddJob("@every 1s", job.NewCheckXrayRunningJob())
 
-	// Check if xray needs to be restarted
-	s.cron.AddFunc("@every 10s", func() {
+	// Check if xray needs to be restarted every 30 seconds
+	s.cron.AddFunc("@every 30s", func() {
 		if s.xrayService.IsNeedRestartAndSetFalse() {
 			err := s.xrayService.RestartXray(false)
 			if err != nil {

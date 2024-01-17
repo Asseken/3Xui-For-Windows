@@ -1,65 +1,102 @@
-# 3x-ui-Modified version
+# 3X-UI前后端分离
 
-> **Disclaimer: This project is only for personal learning and communication, please do not use it for illegal purposes, please do not use it in a production environment**
+## 修改的地方
 
-[![](https://img.shields.io/github/v/release/mhsanaei/3x-ui.svg)](https://github.com/MHSanaei/3x-ui/releases)
-[![](https://img.shields.io/github/actions/workflow/status/mhsanaei/3x-ui/release.yml.svg)](#)
-[![GO Version](https://img.shields.io/github/go-mod/go-version/mhsanaei/3x-ui.svg)](#)
-[![Downloads](https://img.shields.io/github/downloads/mhsanaei/3x-ui/total.svg)](#)
-[![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+```
+web/web.go
+删除embed的引用文件
+//go:embed assets/*
+var assetsFS embed.FS
 
-3x-ui panel supporting multi-protocol, **Multi-lang (English,Farsi,Chinese,Russian,Vietnamese,Spanish)**
-**If you think this project is helpful to you, you may wish to give a** :star2:
+//go:embed html/*
+var htmlFS embed.FS
+编译二进制程序不需要把html文件夹和assets文件夹下的文件包含在内
+----------------------------------------------------------
+修改以下函数
+type Server struct {
+//内容不变
+webDir string // 存放嵌入文件的目录路径
+}
+---------------------------------------------------------
+func NewServer() *Server {
+	ctx, cancel := context.WithCancel(context.Background())
+	webDir := "/etc/www" // 修改为嵌入文件存放的目录路径
+	return &Server{
+		ctx:    ctx,
+		cancel: cancel,
+		webDir: webDir, //声明
+	}
+}
+--------------------------------------------------------
+func (s *Server) getHtmlFiles() ([]string, error) {
+	files := make([]string, 0)
+	//dir, _ := os.Getwd() //原3x-ui的注释或者删除
+	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //新的实现方法
+		//err := fs.WalkDir(os.DirFS(dir), "web/html", func(path string, d fs.DirEntry, err error) error { //原3x-ui的方法注释或者删除
+       //内容不变
+}
+----------------------------------------------------------
+func (s *Server) getHtmlTemplate(funcMap template.FuncMap) (*template.Template, error) {
+	t := template.New("").Funcs(funcMap)
+	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //新的方法
+		//err := fs.WalkDir(htmlFS, "html", func(path string, d fs.DirEntry, err error) error { //原3x-ui的方法
+		if err != nil {
+			return err
+		}
 
-**Buy Me a Coffee :**
+		if d.IsDir() {
+			newT, err := t.ParseGlob(filepath.Join(path, "*.html")) //新的方法
+			//newT, err := t.ParseFS(htmlFS, path+"/*.html") //原3x-ui的方法
+			if err != nil {
+				// ignore
+				return nil
+			}
+			//内容不变
+}
+----------------------------------------------------------
+func (s *Server) initRouter() (*gin.Engine, error) {
+// set static files and template 找到以下代码修改
+	if config.IsDebug() {
+		// for development
+		files, err := s.getHtmlFiles()
+		if err != nil {
+			return nil, err
+		}
+		engine.LoadHTMLFiles(files...)
+		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //新的方法
+		//engine.StaticFS(basePath+"assets", http.FS(os.DirFS("web/assets"))) //原3x-ui的方法注释或者删除
+	} else {
+		// for production
+		template, err := s.getHtmlTemplate(engine.FuncMap)
+		if err != nil {
+			return nil, err
+		}
+		engine.SetHTMLTemplate(template)
+		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //新的方法
+		//engine.StaticFS(basePath+"assets", http.FS(&wrapAssetsFS{FS: assetsFS})) //原3x-ui的方法注释或者删除
+	}
+}
+```
 
-- Tron USDT (TRC20): `TXncxkvhkDWGts487Pjqq1qT9JmwRUz8CC`
-
-# Install & Upgrade
+## Install & Upgrade
 
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
 ```
 
-# Install custom version
+## Install Custom Version
 
-To install your desired version you can add the version to the end of install command. Example for ver `v2.0.2`:
+To install your desired version, add the version to the end of the installation command. e.g., ver `v2.0.2`:
 
 ```
 bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v2.0.2
 ```
-
-# SSL
-
-```
-apt-get install certbot -y
-certbot certonly --standalone --agree-tos --register-unsafely-without-email -d yourdomain.com
-certbot renew --dry-run
-```
-
-You also can use `x-ui` menu then select `SSL Certificate Management`
-
-# Features
-
-- System Status Monitoring
-- Search within all inbounds and clients
-- Support Dark/Light theme UI
-- Support multi-user multi-protocol, web page visualization operation
-- Supported protocols: vmess, vless, trojan, shadowsocks, dokodemo-door, socks, http
-- Support for configuring more transport configurations
-- Traffic statistics, limit traffic, limit expiration time
-- Customizable xray configuration templates
-- Support https access panel (self-provided domain name + ssl certificate)
-- Support one-click SSL certificate application and automatic renewal
-- For more advanced configuration items, please refer to the panel
-- Fix api routes (user setting will create with api)
-- Support to change configs by different items provided in panel
-- Support export/import database from panel
-
-# Manual Install & Upgrade
+## Manual Install & Upgrade
 
 <details>
-  <summary>Click for Manual Install details</summary>
+  <summary>Click for manual install details</summary>
+
+#### Usage
 
 1. To download the latest version of the compressed package directly to your server, run the following command:
 
@@ -88,71 +125,76 @@ systemctl restart x-ui
 
 </details>
 
-# Install with Docker
+## Recommended OS
+
+- Ubuntu 20.04+
+- Debian 11+
+- CentOS 8+
+- Fedora 36+
+- Arch Linux
+- Manjaro
+- Armbian
+- AlmaLinux 9+
+- Rockylinux 9+
+
+
+## Languages
+
+- English
+- Farsi
+- Chinese
+- Russian
+- Vietnamese
+- Spanish
+
+
+## Features
+
+- System Status Monitoring
+- Search within all inbounds and clients
+- Dark/Light theme
+- Supports multi-user and multi-protocol
+- Supports protocols, including VMess, VLESS, Trojan, Shadowsocks, Dokodemo-door, Socks, HTTP, wireguard
+- Supports XTLS native Protocols, including RPRX-Direct, Vision, REALITY
+- Traffic statistics, traffic limit, expiration time limit
+- Customizable Xray configuration templates
+- Supports HTTPS access panel (self-provided domain name + SSL certificate)
+- Supports One-Click SSL certificate application and automatic renewal
+- For more advanced configuration items, please refer to the panel
+- Fixes API routes (user setting will be created with API)
+- Supports changing configs by different items provided in the panel.
+- Supports export/import database from the panel
+
+
+## Default Settings
 
 <details>
-  <summary>Click for Docker details</summary>
+  <summary>Click for default settings details</summary>
 
-1. Install Docker:
+  ### Information
 
-   ```sh
-   bash <(curl -sSL https://get.docker.com)
-   ```
-
-2. Clone the Project Repository:
-
-   ```sh
-   git clone https://github.com/MHSanaei/3x-ui.git
-   cd 3x-ui
-   ```
-
-3. Start the Service
-
-   ```sh
-   docker compose up -d
-   ```
-
-   OR
-
-   ```sh
-   docker run -itd \
-      -e XRAY_VMESS_AEAD_FORCED=false \
-      -v $PWD/db/:/etc/x-ui/ \
-      -v $PWD/cert/:/root/cert/ \
-      --network=host \
-      --restart=unless-stopped \
-      --name 3x-ui \
-      ghcr.io/mhsanaei/3x-ui:latest
-   ```
-
+- **Port:** 2053
+- **Username & Password:** It will be generated randomly if you skip modifying.
+- **Database Path:**
+  - /etc/x-ui/x-ui.db
+- **Xray Config Path:**
+  - /usr/local/x-ui/bin/config.json
+- **Web Panel Path w/o Deploying SSL:**
+  - http://ip:2053/panel
+  - http://domain:2053/panel
+- **Web Panel Path w/ Deploying SSL:**
+  - https://domain:2053/panel
+ 
 </details>
 
-# Default settings
+## Xray Configurations
 
 <details>
-  <summary>Click for Default settings details</summary>
+  <summary>Click for Xray configurations details</summary>
+  
+#### Usage
 
-- Port: 8080
-- username and password will be generated randomly if you skip to modify your own security(x-ui "7")
-- Default database path: /etc/x-ui/x-ui.db
-- xray config path: /usr/local/x-ui/bin/config.json
-
-Before you set ssl on settings
-
-- http://ip:8080/panel
-- http://domain:8080/panel
-
-After you set ssl on settings
-
-- https://yourdomain:8080/panel
-</details>
-
-# Xray Configurations:
-
-<details>
-  <summary>Click for Xray Configurations details</summary>
-
-**copy and paste to xray Configuration :** (you don't need to do this if you have a fresh install)
+**1.** Copy & paste into the Advanced Xray Configuration:
 
 - [traffic](./media/configs/traffic.json)
 - [traffic + Block all Iran IP address](./media/configs/traffic+block-iran-ip.json)
@@ -160,28 +202,32 @@ After you set ssl on settings
 - [traffic + Block Ads + Use IPv4 for Google](./media/configs/traffic+block-ads+ipv4-google.json)
 - [traffic + Block Ads + Route Google + Netflix + Spotify + OpenAI (ChatGPT) to WARP](./media/configs/traffic+block-ads+warp.json)
 
+***Tip:*** *You don't need to do this for a fresh install.*
+
 </details>
 
-# [WARP Configuration](https://gitlab.com/fscarmen/warp) (Optional)
+## [WARP Configuration](https://gitlab.com/fscarmen/warp)
 
 <details>
-  <summary>Click for WARP Configuration details</summary>
+  <summary>Click for WARP configuration details</summary>
+
+#### Usage
 
 If you want to use routing to WARP follow steps as below:
 
-1. If you already installed warp, you can uninstall using below command:
+**1.** If you already installed warp, you can uninstall using below command:
 
    ```sh
    warp u
    ```
 
-2. Install WARP on **socks proxy mode**:
+**2.** Install WARP on **SOCKS Proxy Mode**:
 
    ```sh
    bash <(curl -sSL https://raw.githubusercontent.com/hamid-gh98/x-ui-scripts/main/install_warp_proxy.sh)
    ```
 
-3. Turn on the config you need in panel or [Copy and paste this file to Xray Configuration](./media/configs/traffic+block-ads+warp.json)
+**3.** Turn on the config you need in panel or [Copy and paste this file to Xray Configuration](./media/configs/traffic+block-ads+warp.json)
 
    Config Features:
 
@@ -191,12 +237,14 @@ If you want to use routing to WARP follow steps as below:
 
 </details>
 
-# IP Limit
+## IP Limit
 
 <details>
-  <summary>Click for IP Limit details</summary>
+  <summary>Click for IP limit details</summary>
 
-**Note: IP Limit won't work correctly when using IP Tunnel**
+#### Usage
+
+**Note:** IP Limit won't work correctly when using IP Tunnel
 
 - For versions up to `v1.6.1`:
 
@@ -222,73 +270,14 @@ If you want to use routing to WARP follow steps as below:
 
 </details>
 
-# Telegram Bot
-
-<details>
-  <summary>Click for Telegram Bot details</summary>
-
-X-UI supports daily traffic notification, panel login reminder and other functions through the Tg robot. To use the Tg robot, you need to apply for the specific application tutorial. You can refer to the [blog](https://coderfan.net/how-to-use-telegram-bot-to-alarm-you-when-someone-login-into-your-vps.html)
-Set the robot-related parameters in the panel background, including:
-
-- Tg robot Token
-- Tg robot ChatId
-- Tg robot cycle runtime, in crontab syntax
-- Tg robot Expiration threshold
-- Tg robot Traffic threshold
-- Tg robot Enable send backup in cycle runtime
-- Tg robot Enable CPU usage alarm threshold
-
-Reference syntax:
-
-- 30 \* \* \* \* \* //Notify at the 30s of each point
-- 0 \*/10 \* \* \* \* //Notify at the first second of each 10 minutes
-- @hourly // hourly notification
-- @daily // Daily notification (00:00 in the morning)
-- @weekly // weekly notification
-- @every 8h // notify every 8 hours
-
-# Telegram Bot Features
-
-- Report periodic
-- Login notification
-- CPU threshold notification
-- Threshold for Expiration time and Traffic to report in advance
-- Support client report menu if client's telegram username added to the user's configurations
-- Support telegram traffic report searched with UUID (VMESS/VLESS) or Password (TROJAN) - anonymously
-- Menu based bot
-- Search client by email ( only admin )
-- Check all inbounds
-- Check server status
-- Check depleted users
-- Receive backup by request and in periodic reports
-- Multi language bot
-</details>
-
-# Setting up Telegram bot
-
-- Start [Botfather](https://t.me/BotFather) in your Telegram account:
-    ![Botfather](./media/botfather.png)
-  
-- Create a new Bot using /newbot command: It will ask you 2 questions, A name and a username for your bot. Note that the username has to end with the word "bot".
-    ![Create new bot](./media/newbot.png)
-
-- Start the bot you've just created. You can find the link to your bot here.
-    ![token](./media/token.png)
-
-- Enter your panel and config Telegram bot settings like below:
-![Panel Config](./media/panel-bot-config.png)
-
-Enter your bot token in input field number 3.
-Enter the user ID in input field number 4. The Telegram accounts with this id will be the bot admin. (You can enter more than one, Just separate them with ,)
-
-- How to get Telegram user ID? Use this [bot](https://t.me/useridinfobot), Start the bot and it will give you the Telegram user ID.
-![User ID](./media/user-id.png)
 
 
-# API routes
+## API Routes
 
 <details>
   <summary>Click for API routes details</summary>
+
+#### Usage
 
 - `/login` with `POST` user data: `{username: '', password: ''}` for login
 - `/panel/api/inbounds` base for following actions:
@@ -324,10 +313,12 @@ Enter the user ID in input field number 4. The Telegram accounts with this id wi
 - [<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://app.getpostman.com/run-collection/16802678-1a4c9270-ac77-40ed-959a-7aa56dc4a415?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D16802678-1a4c9270-ac77-40ed-959a-7aa56dc4a415%26entityType%3Dcollection%26workspaceId%3D2cd38c01-c851-4a15-a972-f181c23359d9)
 </details>
 
-# Environment Variables
+## Environment Variables
 
 <details>
-  <summary>Click for Environment Variables details</summary>
+  <summary>Click for environment variables details</summary>
+
+#### Usage
 
 | Variable       |                      Type                      | Default       |
 | -------------- | :--------------------------------------------: | :------------ |
@@ -344,37 +335,3 @@ XUI_BIN_FOLDER="bin" XUI_DB_FOLDER="/etc/x-ui" go build main.go
 ```
 
 </details>
-
-# A Special Thanks To
-
-- [alireza0](https://github.com/alireza0/)
-
-# Acknowledgment
-
-- [Iran v2ray rules](https://github.com/chocolate4u/Iran-v2ray-rules) (License: **GPL-3.0**): _Enhanced v2ray/xray and v2ray/xray-clients routing rules with built-in Iranian domains and a focus on security and adblocking._
-- [Iran Hosted Domains](https://github.com/bootmortis/iran-hosted-domains) (License: **MIT**): _A comprehensive list of Iranian domains and services that are hosted within the country._
-- [PersianBlocker](https://github.com/MasterKia/PersianBlocker) (License: **AGPLv3**): _An optimal and extensive list to block ads and trackers on Persian websites._
-
-# Suggestion System
-
-- Ubuntu 20.04+
-- Debian 10+
-- CentOS 8+
-- Fedora 36+
-- Arch Linux
-- Manjaro
-- Armbian (for ARM devices)
-
-# Pictures
-
-![1](./media/1.png)
-![2](./media/2.png)
-![3](./media/3.png)
-![4](./media/4.png)
-![5](./media/5.png)
-![6](./media/6.png)
-![7](./media/7.png)
-
-## Stargazers over time
-
-[![Stargazers over time](https://starchart.cc/MHSanaei/3x-ui.svg)](https://starchart.cc/MHSanaei/3x-ui)

@@ -49,8 +49,7 @@ func IsDebug() bool {
 func GetBinFolderPath() string {
 	binFolderPath := os.Getenv("XUI_BIN_FOLDER")
 	if binFolderPath == "" {
-		//binFolderPath = "bin"
-		binFolderPath = "/etc" //修改db数据库存放位置
+		binFolderPath = "/etc"
 	}
 	return binFolderPath
 }
@@ -70,8 +69,7 @@ func GetDBPath() string {
 func GetLogFolder() string {
 	logFolderPath := os.Getenv("XUI_LOG_FOLDER")
 	if logFolderPath == "" {
-		//logFolderPath = "/var/log"
-		logFolderPath = "/etc/log" //修改日志存放位置
+		logFolderPath = "/etc/log"
 	}
 	return logFolderPath
 }
