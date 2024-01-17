@@ -1,4 +1,4 @@
-# 3X-UI前后端分离
+# 3X-UI前端分离
 
 ## 修改的地方
 
@@ -77,53 +77,6 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	}
 }
 ```
-
-## Install & Upgrade
-
-```
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-```
-
-## Install Custom Version
-
-To install your desired version, add the version to the end of the installation command. e.g., ver `v2.0.2`:
-
-```
-bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh) v2.0.2
-```
-## Manual Install & Upgrade
-
-<details>
-  <summary>Click for manual install details</summary>
-
-#### Usage
-
-1. To download the latest version of the compressed package directly to your server, run the following command:
-
-```sh
-ARCH=$(uname -m)
-[[ "${ARCH}" == "aarch64" || "${ARCH}" == "arm64" ]] && XUI_ARCH="arm64" || XUI_ARCH="amd64"
-wget https://github.com/MHSanaei/3x-ui/releases/latest/download/x-ui-linux-${XUI_ARCH}.tar.gz
-```
-
-2. Once the compressed package is downloaded, execute the following commands to install or upgrade x-ui:
-
-```sh
-ARCH=$(uname -m)
-[[ "${ARCH}" == "aarch64" || "${ARCH}" == "arm64" ]] && XUI_ARCH="arm64" || XUI_ARCH="amd64"
-cd /root/
-rm -rf x-ui/ /usr/local/x-ui/ /usr/bin/x-ui
-tar zxvf x-ui-linux-${XUI_ARCH}.tar.gz
-chmod +x x-ui/x-ui x-ui/bin/xray-linux-* x-ui/x-ui.sh
-cp x-ui/x-ui.sh /usr/bin/x-ui
-cp -f x-ui/x-ui.service /etc/systemd/system/
-mv x-ui/ /usr/local/
-systemctl daemon-reload
-systemctl enable x-ui
-systemctl restart x-ui
-```
-
-</details>
 
 ## Recommended OS
 
@@ -326,7 +279,7 @@ If you want to use routing to WARP follow steps as below:
 | XUI_DEBUG      |                   `boolean`                    | `false`       |
 | XUI_BIN_FOLDER |                    `string`                    | `"bin"`       |
 | XUI_DB_FOLDER  |                    `string`                    | `"/etc/x-ui"` |
-| XUI_LOG_FOLDER |                    `string`                    | `"/var/log"`  |
+| XUI_LOG_FOLDER |                    `string`                    | `"/etc/log"`  |
 
 Example:
 
