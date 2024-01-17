@@ -1,7 +1,7 @@
 # 3X-UI front-end separation
 
 ## Temporarily migrate and store front-end files in the/etc/wwwww directory
-## 修改的地方
+## ! modify
 
 ```
 web/web.go
@@ -14,7 +14,7 @@ web/web.go
 
 Compiling binary programs does not require including files in the HTML folder and assets folder
 ----------------------------------------------------------
-修改以下函数
+! modify
 type Server struct {
 //
 webDir string // dir
@@ -22,7 +22,7 @@ webDir string // dir
 ---------------------------------------------------------
 func NewServer() *Server {
 	ctx, cancel := context.WithCancel(context.Background())
-	webDir := "/etc/www" // 修改为嵌入文件存放的目录路径
+	webDir := "/etc/www" // dir
 	return &Server{
 		ctx:    ctx,
 		cancel: cancel,
