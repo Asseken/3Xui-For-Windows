@@ -53,11 +53,11 @@ func (s *Server) getHtmlTemplate(funcMap template.FuncMap) (*template.Template, 
 				// ignore
 				return nil
 			}
-			//内容不变
+			//
 }
 ----------------------------------------------------------
 func (s *Server) initRouter() (*gin.Engine, error) {
-// set static files and template 找到以下代码修改
+// set static files and template !!!thins modify
 	if config.IsDebug() {
 		// for development
 		files, err := s.getHtmlFiles()
