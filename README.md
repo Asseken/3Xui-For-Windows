@@ -107,6 +107,8 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 <details>
   <summary>Click for bug fix details</summary>
+
+ 
 ```
 ！Modify xray/process.go -->stop function
 func (p *process) Stop() error {
@@ -132,8 +134,10 @@ func (p *process) Stop() error {
 
 	return nil
 }
+
 ```
 </details>
+
 ## Default Settings
 
 <details>
