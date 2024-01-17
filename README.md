@@ -1,21 +1,23 @@
-# 3X-UI前端分离
+# 3X-UI front-end separation
 
+## Temporarily migrate and store front-end files in the/etc/wwwww directory
 ## 修改的地方
 
 ```
 web/web.go
-删除embed的引用文件
-//go:embed assets/*
-var assetsFS embed.FS
+！del embed or //
+////go:embed assets/*
+//var assetsFS embed.FS
 
-//go:embed html/*
-var htmlFS embed.FS
-编译二进制程序不需要把html文件夹和assets文件夹下的文件包含在内
+////go:embed html/*
+//var htmlFS embed.FS
+
+Compiling binary programs does not require including files in the HTML folder and assets folder
 ----------------------------------------------------------
 修改以下函数
 type Server struct {
-//内容不变
-webDir string // 存放嵌入文件的目录路径
+//
+webDir string // dir
 }
 ---------------------------------------------------------
 func NewServer() *Server {
@@ -24,29 +26,29 @@ func NewServer() *Server {
 	return &Server{
 		ctx:    ctx,
 		cancel: cancel,
-		webDir: webDir, //声明
+		webDir: webDir, //sing
 	}
 }
 --------------------------------------------------------
 func (s *Server) getHtmlFiles() ([]string, error) {
 	files := make([]string, 0)
-	//dir, _ := os.Getwd() //原3x-ui的注释或者删除
-	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //新的实现方法
-		//err := fs.WalkDir(os.DirFS(dir), "web/html", func(path string, d fs.DirEntry, err error) error { //原3x-ui的方法注释或者删除
-       //内容不变
+	//dir, _ := os.Getwd() //3x-ui
+	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //new
+		//err := fs.WalkDir(os.DirFS(dir), "web/html", func(path string, d fs.DirEntry, err error) error { //3x-ui
+       //
 }
 ----------------------------------------------------------
 func (s *Server) getHtmlTemplate(funcMap template.FuncMap) (*template.Template, error) {
 	t := template.New("").Funcs(funcMap)
-	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //新的方法
-		//err := fs.WalkDir(htmlFS, "html", func(path string, d fs.DirEntry, err error) error { //原3x-ui的方法
+	err := filepath.WalkDir(s.webDir, func(path string, d fs.DirEntry, err error) error { //new
+		//err := fs.WalkDir(htmlFS, "html", func(path string, d fs.DirEntry, err error) error { //3x-ui
 		if err != nil {
 			return err
 		}
 
 		if d.IsDir() {
-			newT, err := t.ParseGlob(filepath.Join(path, "*.html")) //新的方法
-			//newT, err := t.ParseFS(htmlFS, path+"/*.html") //原3x-ui的方法
+			newT, err := t.ParseGlob(filepath.Join(path, "*.html")) //new
+			//newT, err := t.ParseFS(htmlFS, path+"/*.html") //3x-ui
 			if err != nil {
 				// ignore
 				return nil
@@ -63,8 +65,8 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 			return nil, err
 		}
 		engine.LoadHTMLFiles(files...)
-		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //新的方法
-		//engine.StaticFS(basePath+"assets", http.FS(os.DirFS("web/assets"))) //原3x-ui的方法注释或者删除
+		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //new
+		//engine.StaticFS(basePath+"assets", http.FS(os.DirFS("web/assets"))) //3x-ui。old
 	} else {
 		// for production
 		template, err := s.getHtmlTemplate(engine.FuncMap)
@@ -72,11 +74,12 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 			return nil, err
 		}
 		engine.SetHTMLTemplate(template)
-		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //新的方法
-		//engine.StaticFS(basePath+"assets", http.FS(&wrapAssetsFS{FS: assetsFS})) //原3x-ui的方法注释或者删除
+		engine.Static("/assets", filepath.Join(s.webDir, "assets")) //new
+		//engine.StaticFS(basePath+"assets", http.FS(&wrapAssetsFS{FS: assetsFS})) //3x-ui
 	}
 }
 ```
+## goland : go build xxx.go .......finish complete
 
 ## Recommended OS
 
