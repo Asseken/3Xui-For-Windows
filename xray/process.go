@@ -17,24 +17,44 @@ import (
 	"x-ui/util/common"
 )
 
+//	func GetBinaryName() string {
+//		return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
+//	}
+//
+// -------new way for windows or linux-----
 func GetBinaryName() string {
+	if runtime.GOOS == "windows" {
+		return fmt.Sprintf("xray-%s-%s.exe", runtime.GOOS, runtime.GOARCH)
+	}
 	return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
 }
 
 func GetBinaryPath() string {
-	return config.GetBinFolderPath() + "/" + GetBinaryName()
+	return config.GetXrayFolderPath() + "/" + GetBinaryName()
 }
 
 func GetConfigPath() string {
 	return config.GetBinFolderPath() + "/config.json"
 }
 
+//	func GetGeositePath() string {
+//		return config.GetBinFolderPath() + "/geosite.dat"
+//	}
+//
+//	func GetGeoipPath() string {
+//		return config.GetBinFolderPath() + "/geoip.dat"
+//	}
+//
+// -----file move to /etc/xray
+func GetWxraytPath() string {
+	return config.GetXrayFolderPath() + "/" + "wxray.exe"
+}
 func GetGeositePath() string {
-	return config.GetBinFolderPath() + "/geosite.dat"
+	return config.GetXrayFolderPath() + "/geosite.dat"
 }
 
 func GetGeoipPath() string {
-	return config.GetBinFolderPath() + "/geoip.dat"
+	return config.GetXrayFolderPath() + "/geoip.dat"
 }
 
 func GetIPLimitLogPath() string {

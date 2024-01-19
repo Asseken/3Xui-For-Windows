@@ -376,9 +376,37 @@ func (s *ServerService) UpdateXray(version string) error {
 		return err
 	}
 
-	err = copyZipFile("xray", xray.GetBinaryPath())
-	if err != nil {
-		return err
+	//err = copyZipFile("xray", xray.GetBinaryPath())
+	//if err != nil {
+	//	return err
+	//}
+	// 根据操作系统选择性地复制文件
+	switch runtime.GOOS {
+	case "windows":
+		if err := copyZipFile("xray.exe", xray.GetBinaryPath()); err != nil {
+			return err
+		}
+		if err := copyZipFile("wxray.exe", xray.GetWxraytPath()); err != nil {
+			return err
+		}
+		if err := copyZipFile("geosite.dat", xray.GetGeositePath()); err != nil {
+			return err
+		}
+		if err := copyZipFile("geoip.dat", xray.GetGeoipPath()); err != nil {
+			return err
+		}
+	case "linux":
+		if err := copyZipFile("xray", xray.GetBinaryPath()); err != nil {
+			return err
+		}
+		if err := copyZipFile("geosite.dat", xray.GetGeositePath()); err != nil {
+			return err
+		}
+		if err := copyZipFile("geoip.dat", xray.GetGeoipPath()); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
 	}
 
 	return nil
