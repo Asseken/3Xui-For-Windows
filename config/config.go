@@ -60,6 +60,14 @@ func GetXrayFolderPath() string {
 	if XrayFolderPath == "" {
 		XrayFolderPath = "/etc/xray"
 	}
+		// 检查目录是否存在，如果不存在则创建
+	if _, err := os.Stat(XrayFolderPath); os.IsNotExist(err) {
+		err := os.MkdirAll(XrayFolderPath, os.ModePerm)
+		if err != nil {
+			// 处理创建目录失败的错误
+			panic(err)
+		}
+	}
 	return XrayFolderPath
 }
 
@@ -81,6 +89,14 @@ func GetLogFolder() string {
 	logFolderPath := os.Getenv("XUI_LOG_FOLDER")
 	if logFolderPath == "" {
 		logFolderPath = "/etc/log"
+	}
+		// 检查目录是否存在，如果不存在则创建
+	if _, err := os.Stat(logFolderPath); os.IsNotExist(err) {
+		err := os.MkdirAll(logFolderPath, os.ModePerm)
+		if err != nil {
+			// 处理创建目录失败的错误
+			panic(err)
+		}
 	}
 	return logFolderPath
 }
