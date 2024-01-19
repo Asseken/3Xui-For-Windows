@@ -157,7 +157,7 @@ func GetXrayFolderPath() string {
 	return XrayFolderPath
 }
 
------------------------xray->process for windows --------------------------------
+-----------------------xray->process.go for windows --------------------------------
 //	func GetBinaryName() string {
 //		return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
 //	}//old
@@ -227,6 +227,7 @@ func GetWxraytPath() string {
 	}
 
 ```
+
 </details>
 ## Default Settings
 
