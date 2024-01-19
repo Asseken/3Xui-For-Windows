@@ -137,13 +137,61 @@ func (p *process) Stop() error {
 
 ```
 </details>
+
+
 ## bug fix for update
 
 <details>
+	
   <summary>Click for bug fix details</summary>
 
  
 ```
+ -------new xray file-----config->config.go-------------
+
+func GetXrayFolderPath() string {
+	XrayFolderPath := os.Getenv("XUI_BIN_FOLDER")
+	if XrayFolderPath == "" {
+		XrayFolderPath = "/etc/xray"
+	}
+	return XrayFolderPath
+}
+
+-----------------------xray->process for windows --------------------------------
+//	func GetBinaryName() string {
+//		return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
+//	}//old
+//
+// -------new way for windows or linux-----
+func GetBinaryName() string {
+	if runtime.GOOS == "windows" {
+		return fmt.Sprintf("xray-%s-%s.exe", runtime.GOOS, runtime.GOARCH)
+	}
+	return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
+}
+
+func GetBinaryPath() string {
+	return config.GetXrayFolderPath() + "/" + GetBinaryName()
+}
+
+func GetConfigPath() string {
+	return config.GetBinFolderPath() + "/config.json"
+}
+
+//	func GetGeositePath() string {
+//		return config.GetBinFolderPath() + "/geosite.dat"
+//	}
+//
+//	func GetGeoipPath() string {
+//		return config.GetBinFolderPath() + "/geoip.dat"
+//	}
+//
+// -----file move to /etc/xray
+func GetWxraytPath() string {
+	return config.GetXrayFolderPath() + "/" + "wxray.exe"
+}
+--------------------------------------------------------------------------------------------------
+
 ！Modify web/service/server.go -->update function
 	//err = copyZipFile("xray", xray.GetBinaryPath())
 	//if err != nil {
