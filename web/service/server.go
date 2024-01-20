@@ -433,8 +433,7 @@ func (s *ServerService) UpdateXray(version string) error {
 				return err
 			}
 		}
-	}
-	else {
+	}else {
 		// return fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
 		fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
 	}
