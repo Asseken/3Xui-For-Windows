@@ -253,6 +253,7 @@ func GetWxraytPath() string {
 ```
 
 </details>
+
 ## Default Settings
 
 <details>
