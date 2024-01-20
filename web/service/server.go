@@ -381,34 +381,63 @@ func (s *ServerService) UpdateXray(version string) error {
 	//	return err
 	//}
 	// 根据操作系统选择性地复制文件
-	switch runtime.GOOS {
-	case "windows":
-		if err := copyZipFile("xray.exe", xray.GetBinaryPath()); err != nil {
-			return err
-		}
-		if err := copyZipFile("wxray.exe", xray.GetWxraytPath()); err != nil {
-			return err
-		}
-		if err := copyZipFile("geosite.dat", xray.GetGeositePath()); err != nil {
-			return err
-		}
-		if err := copyZipFile("geoip.dat", xray.GetGeoipPath()); err != nil {
-			return err
-		}
-	case "linux":
-		if err := copyZipFile("xray", xray.GetBinaryPath()); err != nil {
-			return err
-		}
-		if err := copyZipFile("geosite.dat", xray.GetGeositePath()); err != nil {
-			return err
-		}
-		if err := copyZipFile("geoip.dat", xray.GetGeoipPath()); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
+	// switch runtime.GOOS {
+	// case "windows":
+	// 	if err := copyZipFile("xray.exe", xray.GetBinaryPath()); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := copyZipFile("wxray.exe", xray.GetWxraytPath()); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := copyZipFile("geosite.dat", xray.GetGeositePath()); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := copyZipFile("geoip.dat", xray.GetGeoipPath()); err != nil {
+	// 		return err
+	// 	}
+	// case "linux":
+	// 	if err := copyZipFile("xray", xray.GetBinaryPath()); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := copyZipFile("geosite.dat", xray.GetGeositePath()); err != nil {
+	// 		return err
+	// 	}
+	// 	if err := copyZipFile("geoip.dat", xray.GetGeoipPath()); err != nil {
+	// 		return err
+	// 	}
+	// default:
+	// 	return fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
+	// }
+	copyLinuxFiles := map[string]string{
+		"xray":        xray.GetBinaryPath(),
+		"geosite.dat": xray.GetGeositePath(),
+		"geoip.dat":   xray.GetGeoipPath(),
 	}
-
+	copyWinFiles := map[string]string{
+		"xray.exe":    xray.GetBinaryPath(),
+		"wxray.exe":   xray.GetWxraytPath(),
+		"geosite.dat": xray.GetGeositePath(),
+		"geoip.dat":   xray.GetGeoipPath(),
+	}
+	if runtime.GOOS == "linux" {
+		for fileName, filePath := range copyLinuxFiles {
+			err := copyZipFile(fileName, filePath)
+			if err != nil {
+				return err
+			}
+		}
+	} else if runtime.GOOS == "windows" {
+		for fileName, filePath := range copyWinFiles {
+			err := copyZipFile(fileName, filePath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	else {
+		// return fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
+		fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
+	}
 	return nil
 
 }
