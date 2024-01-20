@@ -179,7 +179,33 @@ func GetLogFolder() string {
 	}
 	return logFolderPath
 }
-
+-------or-----------------
+	copyLinuxFiles := map[string]string{
+		"xray":        xray.GetBinaryPath(),
+		"geosite.dat": xray.GetGeositePath(),
+		"geoip.dat":   xray.GetGeoipPath(),
+	}
+	copyWinFiles := map[string]string{
+		"xray.exe":    xray.GetBinaryPath(),
+		"wxray.exe":   xray.GetWxraytPath(),
+		"geosite.dat": xray.GetGeositePath(),
+		"geoip.dat":   xray.GetGeoipPath(),
+	}
+	if runtime.GOOS == "linux" {
+		for fileName, filePath := range copyLinuxFiles {
+			err := copyZipFile(fileName, filePath)
+			if err != nil {
+				return err
+			}
+		}
+	} else if runtime.GOOS == "windows" {
+		for fileName, filePath := range copyWinFiles {
+			err := copyZipFile(fileName, filePath)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 -----------------------xray->process.go for windows --------------------------------
 //	func GetBinaryName() string {
