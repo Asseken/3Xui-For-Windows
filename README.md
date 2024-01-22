@@ -80,6 +80,9 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 }
 ```
 ## goland : go build xxx.go .......finish complete
+### Create a main.rc file with the following content: IDI_ ICON1 ICON "favicon. ico"
+### Then run the terminal command in the current directory: windres - o main.syso main.rc
+### Finally, go build completes packaging
 
 ## Recommended OS
 
