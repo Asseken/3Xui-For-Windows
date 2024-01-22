@@ -250,8 +250,10 @@ func (s *Server) startTask() {
 	if err != nil {
 		logger.Warning("start xray failed:", err)
 	}
+	// // Check whether xray is running every second
+	// s.cron.AddJob("@every 1s", job.NewCheckXrayRunningJob())
 	// Check whether xray is running every second
-	s.cron.AddJob("@every 1s", job.NewCheckXrayRunningJob())
+	s.cron.AddJob("@every 5s", job.NewCheckXrayRunningJob())
 
 	// Check if xray needs to be restarted every 30 seconds
 	s.cron.AddFunc("@every 30s", func() {
