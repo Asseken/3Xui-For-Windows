@@ -179,7 +179,7 @@ func GetLogFolder() string {
 	}
 	return logFolderPath
 }
--------or-----------------
+-------or web->web.go-----------------
 	copyLinuxFiles := map[string]string{
 		"xray":        xray.GetBinaryPath(),
 		"geosite.dat": xray.GetGeositePath(),
@@ -209,12 +209,16 @@ func GetLogFolder() string {
 		//return fmt.Errorf("不支持的操作系统：%s", runtime.GOOS)
 		fmt.Errorf("不支持的操作系统：s%", runtime.GOOS)
 	}
-
+-----------------Check the xray operation every 5 seconds---------------------------
+func (s *Server) startTask() {
+	err := s.xrayService.RestartXray(true)
+	if err != nil {
+		logger.Warning("start xray failed:", err)
+	}
+	// Check whether xray is running every second
+	s.cron.AddJob("@every 5s", job.NewCheckXrayRunningJob())
 -----------------------xray->process.go for windows --------------------------------
-//	func GetBinaryName() string {
-//		return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
-//	}//old
-//
+
 // -------new way for windows or linux-----
 func GetBinaryName() string {
 	if runtime.GOOS == "windows" {
@@ -231,14 +235,6 @@ func GetConfigPath() string {
 	return config.GetBinFolderPath() + "/config.json"
 }
 
-//	func GetGeositePath() string {
-//		return config.GetBinFolderPath() + "/geosite.dat"
-//	}
-//
-//	func GetGeoipPath() string {
-//		return config.GetBinFolderPath() + "/geoip.dat"
-//	}
-//
 // -----file move to /etc/xray
 func GetWxraytPath() string {
 	return config.GetXrayFolderPath() + "/" + "wxray.exe"
@@ -246,10 +242,6 @@ func GetWxraytPath() string {
 --------------------------------------------------------------------------------------------------
 
 ！Modify web/service/server.go -->update function
-	//err = copyZipFile("xray", xray.GetBinaryPath())
-	//if err != nil {
-	//	return err
-	//}
 	// 根据操作系统选择性地复制文件
 	switch runtime.GOOS {
 	case "windows":
