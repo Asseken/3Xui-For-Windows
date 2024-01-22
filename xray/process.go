@@ -251,9 +251,22 @@ func (p *process) Start() (err error) {
 	return nil
 }
 
+// func (p *process) Stop() error {
+// 	if !p.IsRunning() {
+// 		return errors.New("xray is not running")
+// 	}
+// 	return p.cmd.Process.Signal(syscall.SIGTERM)
+// }
 func (p *process) Stop() error {
 	if !p.IsRunning() {
 		return errors.New("xray is not running")
 	}
-	return p.cmd.Process.Signal(syscall.SIGTERM)
+	//return p.cmd.Process.Signal(syscall.SIGTERM)
+	//return p.cmd.Process.Kill()
+	if runtime.GOOS == "linux" {
+		return p.cmd.Process.Signal(syscall.SIGTERM)
+	} else if runtime.GOOS == "windows" {
+		return p.cmd.Process.Kill()
+	}
+	return errors.New("unsupported operating system")
 }
