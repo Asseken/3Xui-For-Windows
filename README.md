@@ -1,7 +1,9 @@
 # 3X-UI front-end separation To Windows
 
-## Temporarily migrate and store front-end files in the/etc/wwwww directory
-## ! modify
+
+## Reproduce from 3x ui
+## Temporarily migrate and store front-end files in the/etc/wwwww directory，The file does not contain front-end files.
+## ! modify 
 
 ## modify
 
