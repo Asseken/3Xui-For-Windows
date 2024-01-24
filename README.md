@@ -1,4 +1,4 @@
-# 3X-UI front-end separation
+# 3X-UI front-end separation To Windows
 
 ## Temporarily migrate and store front-end files in the/etc/wwwww directory
 ## ! modify
@@ -290,7 +290,7 @@ func GetWxraytPath() string {
 - **Database Path:**
   - /etc/x-ui/x-ui.db
 - **Xray Config Path:**
-  - /usr/local/x-ui/bin/config.json
+  - /etc/config.json
 - **Web Panel Path w/o Deploying SSL:**
   - http://ip:2053/panel
   - http://domain:2053/panel
@@ -298,41 +298,6 @@ func GetWxraytPath() string {
   - https://domain:2053/panel
  
 </details>
-
-## IP Limit
-
-<details>
-  <summary>Click for IP limit details</summary>
-
-#### Usage
-
-**Note:** IP Limit won't work correctly when using IP Tunnel
-
-- For versions up to `v1.6.1`:
-
-  - IP limit is built-in into the panel.
-
-- For versions `v1.7.0` and newer:
-
-  - To make IP Limit work properly, you need to install fail2ban and its required files by following these steps:
-
-    1. Use the `x-ui` command inside the shell.
-    2. Select `IP Limit Management`.
-    3. Choose the appropriate options based on your needs.
-   
-  - make sure you have access.log on your Xray Configuration
-  
-  ```sh
-    "log": {
-    "loglevel": "warning",
-    "access": "./access.log",
-    "error": "./error.log"
-    },
-  ```
-
-</details>
-
-
 
 ## API Routes
 
