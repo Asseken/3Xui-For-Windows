@@ -3,6 +3,11 @@
 ## Temporarily migrate and store front-end files in the/etc/wwwww directory
 ## ! modify
 
+## modify
+
+<details>
+  <summary>Click for bug fix details</summary>
+
 ```
 web/web.go
 ！del embed or //
@@ -79,6 +84,11 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 	}
 }
 ```
+
+
+</details>
+
+
 ## goland : go build xxx.go .......finish complete
 ### Create a main.rc file with the following content: IDI_ ICON1 ICON "favicon. ico"
 ### Then run the terminal command in the current directory: windres - o main.syso main.rc
@@ -86,16 +96,7 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 
 ## Recommended OS
 
-- Ubuntu 20.04+
-- Debian 11+
-- CentOS 8+
-- Fedora 36+
-- Arch Linux
-- Manjaro
-- Armbian
-- AlmaLinux 9+
-- Rockylinux 9+
-
+- windows
 
 ## Languages
 
