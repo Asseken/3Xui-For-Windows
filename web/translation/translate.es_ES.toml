@@ -1,6 +1,6 @@
 "username" = "Nombre de Usuario"
 "password" = "Contraseña"
-"login" = "Acceso"
+"login" = "Acceder"
 "confirm" = "Confirmar"
 "cancel" = "Cancelar"
 "close" = "Cerrar"
@@ -57,12 +57,12 @@
 "dashboard" = "Estado del Sistema"
 "inbounds" = "Entradas"
 "settings" = "Configuraciones"
-"xray" = "Configuración Xray"
+"xray" = "Ajustes Xray"
 "logout" = "Cerrar Sesión"
-"link" = "Otro"
+"link" = "Gestionar"
 
 [pages.login]
-"title" = "Grata"
+"title" = "Bienvenido"
 "loginAgain" = "El límite de tiempo de inicio de sesión ha expirado. Por favor, inicia sesión nuevamente."
 
 [pages.login.toasts]
@@ -178,7 +178,7 @@
 "info" = "Info"
 "same" = "misma"
 "inboundData" = "Datos de entrada"
-"copyToClipboard" = "Copiar al portapapeles"
+"exportInbound" = "Exportación entrante"
 "import" = "Importar"
 "importInbound" = "Importar un entrante"
 
@@ -248,6 +248,7 @@
 "pageSizeDesc" = "Defina el tamaño de página para la tabla de entradas. Establezca 0 para desactivar"
 "remarkModel" = "Modelo de observación y carácter de separación"
 "datepicker" = "selector de fechas"
+"datepickerPlaceholder" = "Seleccionar fecha"
 "datepickerDescription" = "El tipo de calendario selector especifica la fecha de vencimiento"
 "sampleRemark" = "Observación de muestra"
 "oldUsername" = "Nombre de Usuario Actual"
@@ -391,6 +392,10 @@
 "Routings" = "Reglas de enrutamiento"
 "RoutingsDesc" = "¡La prioridad de cada regla es importante!"
 "completeTemplate" = "Todos"
+"logLevel" = "Nivel de registro"
+"logLevelDesc" = "El nivel de registro para registros de errores, que indica la información que debe registrarse."
+"accessLog" = "Registro de acceso"
+"accessLogDesc" = "La ruta del archivo para el registro de acceso. El valor especial 'ninguno' deshabilita los registros de acceso"
 
 [pages.xray.rules]
 "first" = "Primero"

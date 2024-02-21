@@ -74,9 +74,9 @@
 
 [pages.index]
 "title" = "Trạng thái hệ thống"
-"memory" = "Bộ nhớ"
+"memory" = "Ram"
 "hard" = "Dung lượng"
-"xrayStatus" = "Trạng thái"
+"xrayStatus" = "Trạng thái Xray"
 "stopXray" = "Dừng lại"
 "restartXray" = "Khởi động lại"
 "xraySwitch" = "Phiên bản"
@@ -178,7 +178,7 @@
 "info" = "Thông tin"
 "same" = "Giống nhau"
 "inboundData" = "Dữ liệu gửi đến"
-"copyToClipboard" = "Sao chép vào bảng nhớ tạm"
+"exportInbound" = "Xuất nhập khẩu"
 "import" = "Nhập"
 "importInbound" = "Nhập inbound"
 
@@ -248,6 +248,7 @@
 "pageSizeDesc" = "Xác định kích thước trang cho bảng gửi đến. Đặt 0 để tắt"
 "remarkModel" = "Ghi chú mô hình và ký tự phân tách"
 "datepicker" = "Kiểu lịch"
+"datepickerPlaceholder" = "Chọn ngày"
 "datepickerDescription" = "Tác vụ chạy theo lịch trình sẽ chạy theo kiểu lịch này."
 "sampleRemark" = "Nhận xét mẫu"
 "oldUsername" = "Tên người dùng hiện tại"
@@ -391,6 +392,10 @@
 "Routings" = "Quy tắc định tuyến"
 "RoutingsDesc" = "Mức độ ưu tiên của mỗi quy tắc đều quan trọng!"
 "completeTemplate" = "All"
+"logLevel" = "Mức đăng nhập"
+"logLevelDesc" = "Cấp độ nhật ký cho nhật ký lỗi, cho biết thông tin cần được ghi lại."
+"accessLog" = "Nhật ký truy cập"
+"accessLogDesc" = "Đường dẫn tệp cho nhật ký truy cập. Nhật ký truy cập bị vô hiệu hóa có giá trị đặc biệt 'không'"
 
 [pages.xray.rules]
 "first" = "Đầu tiên"

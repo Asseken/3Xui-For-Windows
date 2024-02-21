@@ -17,10 +17,6 @@ import (
 	"x-ui/util/common"
 )
 
-//	func GetBinaryName() string {
-//		return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
-//	}
-//
 // -------new way for windows or linux-----
 func GetBinaryName() string {
 	if runtime.GOOS == "windows" {
@@ -37,14 +33,6 @@ func GetConfigPath() string {
 	return config.GetBinFolderPath() + "/config.json"
 }
 
-//	func GetGeositePath() string {
-//		return config.GetBinFolderPath() + "/geosite.dat"
-//	}
-//
-//	func GetGeoipPath() string {
-//		return config.GetBinFolderPath() + "/geoip.dat"
-//	}
-//
 // -----file move to /etc/xray
 func GetWxraytPath() string {
 	return config.GetXrayFolderPath() + "/" + "wxray.exe"
@@ -251,12 +239,6 @@ func (p *process) Start() (err error) {
 	return nil
 }
 
-// func (p *process) Stop() error {
-// 	if !p.IsRunning() {
-// 		return errors.New("xray is not running")
-// 	}
-// 	return p.cmd.Process.Signal(syscall.SIGTERM)
-// }
 func (p *process) Stop() error {
 	if !p.IsRunning() {
 		return errors.New("xray is not running")

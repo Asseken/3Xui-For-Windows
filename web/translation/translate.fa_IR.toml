@@ -178,7 +178,7 @@
 "info" = "اطلاعات"
 "same" = "همسان"
 "inboundData" = "داده‌های ورودی"
-"copyToClipboard" = "کپی در حافظه"
+"exportInbound" = "استخراج ورودی"
 "import" = "افزودن"
 "importInbound" = "افزودن یک ورودی"
 
@@ -248,6 +248,7 @@
 "pageSizeDesc" = "(اندازه صفحه برای جدول ورودی‌ها.(0 = غیرفعال"
 "remarkModel" = "نام‌کانفیگ و جداکننده"
 "datepicker" = "نوع تقویم"
+"datepickerPlaceholder" = "انتخاب تاریخ"
 "datepickerDescription" = "وظایف برنامه ریزی شده بر اساس این تقویم اجرا می‌شود"
 "sampleRemark" = "نمونه‌نام"
 "oldUsername" = "نام‌کاربری فعلی"
@@ -391,6 +392,10 @@
 "Routings" = "قوانین مسیریابی"
 "RoutingsDesc" = "اولویت هر قانون مهم است"
 "completeTemplate" = "کامل"
+"logLevel" = "سطح گزارش"
+"logLevelDesc" = "سطح گزارش برای گزارش های خطا، نشان دهنده اطلاعاتی است که باید ثبت شوند."
+"accessLog" = "مسیر گزارش"
+"accessLogDesc" = "مسیر فایل برای گزارش دسترسی. مقدار ویژه «هیچ» گزارش‌های دسترسی را غیرفعال میکند."
 
 [pages.xray.rules]
 "first" = "اولین"
@@ -451,7 +456,7 @@
 "wentWrong" = "❌ مشکلی رخ داده است!"
 "noIpRecord" = "❗ رکورد IP یافت نشد!"
 "noInbounds" = "❗ هیچ ورودی یافت نشد!"
-"unlimited" = "♾ نامحدود"
+"unlimited" = "♾ - نامحدود(ریست)"
 "add" = "اضافه کردن"
 "month" = "ماه"
 "months" = "ماه‌ها"

@@ -178,7 +178,7 @@
 "info" = "信息"
 "same" = "相同"
 "inboundData" = "入站数据"
-"copyToClipboard" = "复制到剪贴板"
+"exportInbound" = "出口 入境"
 "import"="导入"
 "importInbound" = "导入入站"
 
@@ -248,6 +248,7 @@
 "pageSizeDesc" = "定义入站表的页面大小。设置 0 表示禁用"
 "remarkModel" = "备注模型和分隔符"
 "datepicker" = "日期选择器"
+"datepickerPlaceholder" = "选择日期"
 "datepickerDescription" = "选择器日历类型指定到期日期"
 "sampleRemark" = "备注示例"
 "oldUsername" = "原用户名"
@@ -391,6 +392,10 @@
 "Routings" = "路由规则"
 "RoutingsDesc" = "每条规则的优先级都很重要"
 "completeTemplate" = "全部"
+"logLevel" = "日志级别"
+"logLevelDesc" = "错误日志的日志级别，表示需要记录的信息。"
+"accessLog" = "访问日志"
+"accessLogDesc" = "访问日志的文件路径。 特殊值“none”禁用访问日志"
 
 [pages.xray.rules]
 "first" = "第一个"

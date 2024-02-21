@@ -317,7 +317,6 @@ func (s *InboundService) UpdateInbound(inbound *model.Inbound) (*model.Inbound, 
 		oldInbound.Tag = fmt.Sprintf("inbound-%v:%v", inbound.Listen, inbound.Port)
 	}
 
-
 	needRestart := false
 	s.xrayApi.Init(p.GetAPIPort())
 	if s.xrayApi.DelInbound(tag) == nil {
@@ -509,6 +508,10 @@ func (s *InboundService) DelInboundClient(inboundId int, clientId string) (bool,
 		}
 	}
 
+	if len(newClients) == 0 {
+		return false, common.NewError("no client remained in Inbound")
+	}
+
 	settings["clients"] = newClients
 	newSettings, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
@@ -679,7 +682,7 @@ func (s *InboundService) UpdateInboundClient(data *model.Inbound, clientId strin
 	return needRestart, tx.Save(oldInbound).Error
 }
 
-func (s *InboundService) AddTraffic(inboundTraffics []*xray.Traffic, clientTraffics []*xray.ClientTraffic) (error, bool) {
+func (s *InboundService) AddTraffic(traffics []*xray.Traffic, clientTraffics []*xray.ClientTraffic) (error, bool) {
 	var err error
 	db := database.GetDB()
 	tx := db.Begin()
@@ -691,7 +694,7 @@ func (s *InboundService) AddTraffic(inboundTraffics []*xray.Traffic, clientTraff
 			tx.Commit()
 		}
 	}()
-	err = s.addInboundTraffic(tx, inboundTraffics)
+	err = s.addInboundTraffic(tx, traffics)
 	if err != nil {
 		return err, false
 	}
