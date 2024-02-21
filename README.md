@@ -2,7 +2,7 @@
 
 
 ## Reproduce from 3x ui
-## Temporarily migrate and store front-end files in the/etc/www directory，The file does not contain front-end files.
+## Temporarily migrate and store front-end files in the etc/html directory，The file does not contain front-end files.
 ## ! modify 
 
 ## modify
