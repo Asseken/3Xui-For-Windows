@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"x-ui/config"
 	"x-ui/database"
 	"x-ui/database/model"
@@ -26,12 +27,14 @@ import (
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
-var bot *telego.Bot
-var botHandler *th.BotHandler
-var adminIds []int64
-var isRunning bool
-var hostname string
-var hashStorage *global.HashStorage
+var (
+	bot         *telego.Bot
+	botHandler  *th.BotHandler
+	adminIds    []int64
+	isRunning   bool
+	hostname    string
+	hashStorage *global.HashStorage
+)
 
 type LoginStatus byte
 
@@ -202,9 +205,13 @@ func (t *Tgbot) OnReceive() {
 	}, th.AnyCallbackQueryWithMessage())
 
 	botHandler.HandleMessage(func(_ *telego.Bot, message telego.Message) {
-		if message.UserShared != nil {
+		if message.UsersShared != nil {
 			if checkAdmin(message.From.ID) {
-				err := t.inboundService.SetClientTelegramUserID(message.UserShared.RequestID, strconv.FormatInt(message.UserShared.UserID, 10))
+				userIDsStr := ""
+				for _, userID := range message.UsersShared.UserIDs {
+					userIDsStr += strconv.FormatInt(userID, 10) + " "
+				}
+				err := t.inboundService.SetClientTelegramUserID(message.UsersShared.RequestID, userIDsStr)
 				output := ""
 				if err != nil {
 					output += t.I18nBot("tgbot.messages.selectUserFailed")
@@ -276,8 +283,7 @@ func (t *Tgbot) answerCommand(message *telego.Message, chatId int64, isAdmin boo
 }
 
 func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool) {
-
-	chatId := callbackQuery.Message.Chat.ID
+	chatId := callbackQuery.Message.GetChat().ID
 
 	if isAdmin {
 		// get query from hash storage
@@ -296,22 +302,22 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 				t.searchClient(chatId, email)
 			case "client_refresh":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.clientRefreshSuccess", "Email=="+email))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "client_cancel":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.canceled", "Email=="+email))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "ips_refresh":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.IpRefreshSuccess", "Email=="+email))
-				t.searchClientIps(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClientIps(chatId, email, callbackQuery.Message.GetMessageID())
 			case "ips_cancel":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.canceled", "Email=="+email))
-				t.searchClientIps(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClientIps(chatId, email, callbackQuery.Message.GetMessageID())
 			case "tgid_refresh":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.TGIdRefreshSuccess", "Email=="+email))
-				t.clientTelegramUserInfo(chatId, email, callbackQuery.Message.MessageID)
+				t.clientTelegramUserInfo(chatId, email, callbackQuery.Message.GetMessageID())
 			case "tgid_cancel":
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.canceled", "Email=="+email))
-				t.clientTelegramUserInfo(chatId, email, callbackQuery.Message.MessageID)
+				t.clientTelegramUserInfo(chatId, email, callbackQuery.Message.GetMessageID())
 			case "reset_traffic":
 				inlineKeyboard := tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
@@ -321,13 +327,13 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.confirmResetTraffic")).WithCallbackData(t.encodeQuery("reset_traffic_c "+email)),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "reset_traffic_c":
 				err := t.inboundService.ResetClientTrafficByEmail(email)
 				if err == nil {
 					t.xrayService.SetToNeedRestart()
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.resetTrafficSuccess", "Email=="+email))
-					t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+					t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 				} else {
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
 				}
@@ -361,7 +367,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton("200 GB").WithCallbackData(t.encodeQuery("limit_traffic_c "+email+" 200")),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "limit_traffic_c":
 				if len(dataArray) == 3 {
 					limitTraffic, err := strconv.Atoi(dataArray[2])
@@ -370,13 +376,13 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						if err == nil {
 							t.xrayService.SetToNeedRestart()
 							t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.setTrafficLimitSuccess", "Email=="+email))
-							t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+							t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 							return
 						}
 					}
 				}
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "limit_traffic_in":
 				if len(dataArray) >= 3 {
 					oldInputNumber, err := strconv.Atoi(dataArray[2])
@@ -432,12 +438,12 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 								tu.InlineKeyboardButton("⬅️").WithCallbackData(t.encodeQuery("limit_traffic_in "+email+" "+strconv.Itoa(inputNumber)+" -1")),
 							),
 						)
-						t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+						t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 						return
 					}
 				}
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "reset_exp":
 				inlineKeyboard := tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
@@ -464,7 +470,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton(t.I18nBot("tgbot.add")+" 12 "+t.I18nBot("tgbot.months")).WithCallbackData(t.encodeQuery("reset_exp_c "+email+" 365")),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "reset_exp_c":
 				if len(dataArray) == 3 {
 					days, err := strconv.Atoi(dataArray[2])
@@ -499,13 +505,13 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						if err == nil {
 							t.xrayService.SetToNeedRestart()
 							t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.expireResetSuccess", "Email=="+email))
-							t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+							t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 							return
 						}
 					}
 				}
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "reset_exp_in":
 				if len(dataArray) >= 3 {
 					oldInputNumber, err := strconv.Atoi(dataArray[2])
@@ -561,12 +567,12 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 								tu.InlineKeyboardButton("⬅️").WithCallbackData(t.encodeQuery("reset_exp_in "+email+" "+strconv.Itoa(inputNumber)+" -1")),
 							),
 						)
-						t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+						t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 						return
 					}
 				}
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "ip_limit":
 				inlineKeyboard := tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
@@ -595,7 +601,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton("10").WithCallbackData(t.encodeQuery("ip_limit_c "+email+" 10")),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "ip_limit_c":
 				if len(dataArray) == 3 {
 					count, err := strconv.Atoi(dataArray[2])
@@ -604,13 +610,13 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						if err == nil {
 							t.xrayService.SetToNeedRestart()
 							t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.resetIpSuccess", "Email=="+email, "Count=="+strconv.Itoa(count)))
-							t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+							t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 							return
 						}
 					}
 				}
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "ip_limit_in":
 				if len(dataArray) >= 3 {
 					oldInputNumber, err := strconv.Atoi(dataArray[2])
@@ -666,12 +672,12 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 								tu.InlineKeyboardButton("⬅️").WithCallbackData(t.encodeQuery("ip_limit_in "+email+" "+strconv.Itoa(inputNumber)+" -1")),
 							),
 						)
-						t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+						t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 						return
 					}
 				}
 				t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
-				t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+				t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 			case "clear_ips":
 				inlineKeyboard := tu.InlineKeyboard(
 					tu.InlineKeyboardRow(
@@ -681,12 +687,12 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.confirmClearIps")).WithCallbackData(t.encodeQuery("clear_ips_c "+email)),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "clear_ips_c":
 				err := t.inboundService.ClearClientIps(email)
 				if err == nil {
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.clearIpSuccess", "Email=="+email))
-					t.searchClientIps(chatId, email, callbackQuery.Message.MessageID)
+					t.searchClientIps(chatId, email, callbackQuery.Message.GetMessageID())
 				} else {
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
 				}
@@ -705,7 +711,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.confirmRemoveTGUser")).WithCallbackData(t.encodeQuery("tgid_remove_c "+email)),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "tgid_remove_c":
 				traffic, err := t.inboundService.GetClientTrafficByEmail(email)
 				if err != nil || traffic == nil {
@@ -715,7 +721,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 				err = t.inboundService.SetClientTelegramUserID(traffic.Id, "")
 				if err == nil {
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.removedTGUserSuccess", "Email=="+email))
-					t.clientTelegramUserInfo(chatId, email, callbackQuery.Message.MessageID)
+					t.clientTelegramUserInfo(chatId, email, callbackQuery.Message.GetMessageID())
 				} else {
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
 				}
@@ -728,7 +734,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 						tu.InlineKeyboardButton(t.I18nBot("tgbot.buttons.confirmToggle")).WithCallbackData(t.encodeQuery("toggle_enable_c "+email)),
 					),
 				)
-				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.MessageID, inlineKeyboard)
+				t.editMessageCallbackTgBot(chatId, callbackQuery.Message.GetMessageID(), inlineKeyboard)
 			case "toggle_enable_c":
 				enabled, err := t.inboundService.ToggleClientEnableByEmail(email)
 				if err == nil {
@@ -738,7 +744,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 					} else {
 						t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.disableSuccess", "Email=="+email))
 					}
-					t.searchClient(chatId, email, callbackQuery.Message.MessageID)
+					t.searchClient(chatId, email, callbackQuery.Message.GetMessageID())
 				} else {
 					t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.errorOperation"))
 				}
@@ -774,7 +780,7 @@ func (t *Tgbot) asnwerCallback(callbackQuery *telego.CallbackQuery, isAdmin bool
 		t.onlineClients(chatId)
 	case "onlines_refresh":
 		t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.answers.successfulOperation"))
-		t.onlineClients(chatId, callbackQuery.Message.MessageID)
+		t.onlineClients(chatId, callbackQuery.Message.GetMessageID())
 	case "commands":
 		t.sendCallbackAnswerTgBot(callbackQuery.ID, t.I18nBot("tgbot.buttons.commands"))
 		t.SendMsgToTgbot(chatId, t.I18nBot("tgbot.commands.helpAdminCommands"))
@@ -862,7 +868,7 @@ func (t *Tgbot) SendMsgToTgbot(chatId int64, msg string, replyMarkup ...telego.R
 			Text:      message,
 			ParseMode: "HTML",
 		}
-		//only add replyMarkup to last message
+		// only add replyMarkup to last message
 		if len(replyMarkup) > 0 && n == (len(allMessages)-1) {
 			params.ReplyMarkup = replyMarkup[0]
 		}
@@ -1026,9 +1032,15 @@ func (t *Tgbot) getInboundUsages() string {
 	return info
 }
 
-func (t *Tgbot) clientInfoMsg(traffic *xray.ClientTraffic, printEnabled bool, printOnline bool, printActive bool,
-	printDate bool, printTraffic bool, printRefreshed bool) string {
-
+func (t *Tgbot) clientInfoMsg(
+	traffic *xray.ClientTraffic,
+	printEnabled bool,
+	printOnline bool,
+	printActive bool,
+	printDate bool,
+	printTraffic bool,
+	printRefreshed bool,
+) string {
 	now := time.Now().Unix()
 	expiryTime := ""
 	flag := false
@@ -1215,13 +1227,13 @@ func (t *Tgbot) clientTelegramUserInfo(chatId int64, email string, messageID ...
 		t.editMessageTgBot(chatId, messageID[0], output, inlineKeyboard)
 	} else {
 		t.SendMsgToTgbot(chatId, output, inlineKeyboard)
-		requestUser := telego.KeyboardButtonRequestUser{
+		requestUser := telego.KeyboardButtonRequestUsers{
 			RequestID: int32(traffic.Id),
 			UserIsBot: new(bool),
 		}
 		keyboard := tu.Keyboard(
 			tu.KeyboardRow(
-				tu.KeyboardButton(t.I18nBot("tgbot.buttons.selectTGUser")).WithRequestUser(&requestUser),
+				tu.KeyboardButton(t.I18nBot("tgbot.buttons.selectTGUser")).WithRequestUsers(&requestUser),
 			),
 			tu.KeyboardRow(
 				tu.KeyboardButton(t.I18nBot("tgbot.buttons.closeKeyboard")),
@@ -1540,7 +1552,6 @@ func (t *Tgbot) sendBackup(chatId int64) {
 		}
 	} else {
 		logger.Error("Error in opening db file for backup: ", err)
-
 	}
 
 	file, err = os.Open(xray.GetConfigPath())
@@ -1556,8 +1567,6 @@ func (t *Tgbot) sendBackup(chatId int64) {
 	} else {
 		logger.Error("Error in opening config.json file for backup: ", err)
 	}
-
-	t.sendBanLogs(chatId, false)
 }
 
 func (t *Tgbot) sendBanLogs(chatId int64, dt bool) {

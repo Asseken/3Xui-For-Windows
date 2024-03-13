@@ -19,18 +19,11 @@ import (
 )
 
 type CheckClientIpJob struct {
+	lastClear     int64
 	disAllowedIps []string
 }
 
 var job *CheckClientIpJob
-var ipFiles = []string{
-	xray.GetIPLimitLogPath(),
-	xray.GetIPLimitPrevLogPath(),
-	xray.GetIPLimitBannedLogPath(),
-	xray.GetIPLimitBannedPrevLogPath(),
-	xray.GetAccessPersistentLogPath(),
-	xray.GetAccessPersistentPrevLogPath(),
-}
 
 func NewCheckClientIpJob() *CheckClientIpJob {
 	job = new(CheckClientIpJob)
@@ -38,19 +31,50 @@ func NewCheckClientIpJob() *CheckClientIpJob {
 }
 
 func (j *CheckClientIpJob) Run() {
-
-	// create files required for iplimit if not exists
-	for i := 0; i < len(ipFiles); i++ {
-		file, err := os.OpenFile(ipFiles[i], os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-		j.checkError(err)
-		defer file.Close()
+	if j.lastClear == 0 {
+		j.lastClear = time.Now().Unix()
 	}
 
-	// check for limit ip
+	shouldClearAccessLog := false
+	f2bInstalled := j.checkFail2BanInstalled()
+	isAccessLogAvailable := j.checkAccessLogAvailable(f2bInstalled)
+
 	if j.hasLimitIp() {
-		j.checkFail2BanInstalled()
-		j.processLogFile()
+		if f2bInstalled && isAccessLogAvailable {
+			shouldClearAccessLog = j.processLogFile()
+		} else {
+			if !f2bInstalled {
+				logger.Warning("fail2ban is not installed. IP limiting may not work properly.")
+			}
+		}
 	}
+
+	if shouldClearAccessLog || isAccessLogAvailable && time.Now().Unix()-j.lastClear > 3600 {
+		j.clearAccessLog()
+	}
+}
+
+func (j *CheckClientIpJob) clearAccessLog() {
+	logAccessP, err := os.OpenFile(xray.GetAccessPersistentLogPath(), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	j.checkError(err)
+
+	// reopen the access log file for reading
+	accessLogPath := xray.GetAccessLogPath()
+	file, err := os.Open(accessLogPath)
+	j.checkError(err)
+
+	// copy access log content to persistent file
+	_, err = io.Copy(logAccessP, file)
+	j.checkError(err)
+
+	// close the file after copying content
+	logAccessP.Close()
+	file.Close()
+
+	// clean access log
+	err = os.Truncate(accessLogPath, 0)
+	j.checkError(err)
+	j.lastClear = time.Now().Unix()
 }
 
 func (j *CheckClientIpJob) hasLimitIp() bool {
@@ -82,32 +106,18 @@ func (j *CheckClientIpJob) hasLimitIp() bool {
 	return false
 }
 
-func (j *CheckClientIpJob) checkFail2BanInstalled() {
+func (j *CheckClientIpJob) checkFail2BanInstalled() bool {
 	cmd := "fail2ban-client"
 	args := []string{"-h"}
-
 	err := exec.Command(cmd, args...).Run()
-	if err != nil {
-		logger.Warning("fail2ban is not installed. IP limiting may not work properly.")
-	}
+	return err == nil
 }
 
-func (j *CheckClientIpJob) processLogFile() {
+func (j *CheckClientIpJob) processLogFile() bool {
 	accessLogPath := xray.GetAccessLogPath()
-
-	if accessLogPath == "none" {
-		logger.Warning("Access log is set to 'none' check your Xray Configs")
-		return
-	}
-
-	if accessLogPath == "" {
-		logger.Warning("Access log doesn't exist in your Xray Configs")
-		return
-	}
 
 	file, err := os.Open(accessLogPath)
 	j.checkError(err)
-	defer file.Close()
 
 	InboundClientIps := make(map[string][]string)
 
@@ -121,7 +131,7 @@ func (j *CheckClientIpJob) processLogFile() {
 		matches := ipRegx.FindStringSubmatch(line)
 		if len(matches) > 1 {
 			ip := matches[1]
-			if ip == "127.0.0.1" || ip == "[::1]" {
+			if ip == "127.0.0.1" {
 				continue
 			}
 
@@ -143,6 +153,7 @@ func (j *CheckClientIpJob) processLogFile() {
 	}
 
 	j.checkError(scanner.Err())
+	file.Close()
 
 	shouldCleanLog := false
 
@@ -156,29 +167,26 @@ func (j *CheckClientIpJob) processLogFile() {
 		}
 	}
 
-	// added delay before cleaning logs to reduce chance of logging IP that already has been banned
-	time.Sleep(time.Second * 2)
+	return shouldCleanLog
+}
 
-	if shouldCleanLog {
-		// copy access log to persistent file
-		logAccessP, err := os.OpenFile(xray.GetAccessPersistentLogPath(), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-		j.checkError(err)
-		defer logAccessP.Close()
-
-		// reopen the access log file for reading
-		file, err := os.Open(accessLogPath)
-		j.checkError(err)
-		defer file.Close()
-
-		// copy access log content to persistent file
-		_, err = io.Copy(logAccessP, file)
-		j.checkError(err)
-
-		// clean access log
-		if err := os.Truncate(xray.GetAccessLogPath(), 0); err != nil {
-			j.checkError(err)
-		}
+func (j *CheckClientIpJob) checkAccessLogAvailable(doWarning bool) bool {
+	accessLogPath := xray.GetAccessLogPath()
+	isAvailable := true
+	warningMsg := ""
+	// access log is not available if it is set to 'none' or an empty string
+	switch accessLogPath {
+	case "none":
+		warningMsg = "Access log is set to 'none', check your Xray Configs"
+		isAvailable = false
+	case "":
+		warningMsg = "Access log doesn't exist in your Xray Configs"
+		isAvailable = false
 	}
+	if doWarning && warningMsg != "" {
+		logger.Warning(warningMsg)
+	}
+	return isAvailable
 }
 
 func (j *CheckClientIpJob) checkError(e error) {
@@ -256,7 +264,7 @@ func (j *CheckClientIpJob) updateInboundClientIps(inboundClientIps *model.Inboun
 	j.disAllowedIps = []string{}
 
 	// create iplimit log file channel
-	logIpFile, err := os.OpenFile(xray.GetIPLimitLogPath(), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+	logIpFile, err := os.OpenFile(xray.GetIPLimitLogPath(), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		logger.Errorf("failed to create or open ip limit log file: %s", err)
 	}
@@ -289,9 +297,8 @@ func (j *CheckClientIpJob) updateInboundClientIps(inboundClientIps *model.Inboun
 
 	db := database.GetDB()
 	err = db.Save(inboundClientIps).Error
-	if err != nil {
-		return shouldCleanLog
-	}
+	j.checkError(err)
+
 	return shouldCleanLog
 }
 

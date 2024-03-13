@@ -21,8 +21,10 @@ import (
 func GetBinaryName() string {
 	if runtime.GOOS == "windows" {
 		return fmt.Sprintf("xray-%s-%s.exe", runtime.GOOS, runtime.GOARCH)
+	} else if runtime.GOOS == "linux" {
+		return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
 	}
-	return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
+	return fmt.Sprintf("The system does not support it yet, please compile it yourself.")
 }
 
 func GetBinaryPath() string {
@@ -47,10 +49,6 @@ func GetGeoipPath() string {
 
 func GetIPLimitLogPath() string {
 	return config.GetLogFolder() + "/3xipl.log"
-}
-
-func GetIPLimitPrevLogPath() string {
-	return config.GetLogFolder() + "/3xipl.prev.log"
 }
 
 func GetIPLimitBannedLogPath() string {
@@ -214,6 +212,12 @@ func (p *process) Start() (err error) {
 	if err != nil {
 		return common.NewErrorf("Failed to generate xray configuration file: %v", err)
 	}
+
+	err = os.MkdirAll(config.GetLogFolder(), 0770)
+	if err != nil {
+		logger.Warningf("Something went wrong: %s", err)
+	}
+
 	configPath := GetConfigPath()
 	err = os.WriteFile(configPath, data, fs.ModePerm)
 	if err != nil {

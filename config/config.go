@@ -74,7 +74,7 @@ func GetHtmlPath() string {
 
 // -------new xray file------------------
 func GetXrayFolderPath() string {
-	XrayFolderPath := os.Getenv("XUI_BIN_FOLDER")
+	XrayFolderPath := os.Getenv("XUI_XRAY_FOLDER")
 	if XrayFolderPath == "" {
 		XrayFolderPath = "etc/xray"
 	}
@@ -88,7 +88,6 @@ func GetXrayFolderPath() string {
 	}
 	return XrayFolderPath
 }
-
 func GetDBFolderPath() string {
 	dbFolderPath := os.Getenv("XUI_DB_FOLDER")
 	if dbFolderPath == "" {
