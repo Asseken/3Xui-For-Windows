@@ -45,6 +45,10 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, string, error
 		return nil, "", err
 	}
 
+	if len(inbounds) == 0 {
+		return nil, "", common.NewError("No inbounds found with ", subId)
+	}
+
 	s.datepicker, err = s.settingService.GetDatepicker()
 	if err != nil {
 		s.datepicker = "gregorian"
@@ -198,8 +202,13 @@ func (s *SubService) genVmessLink(inbound *model.Inbound, email string) string {
 	case "ws":
 		ws, _ := stream["wsSettings"].(map[string]interface{})
 		obj["path"] = ws["path"].(string)
-		headers, _ := ws["headers"].(map[string]interface{})
-		obj["host"] = searchHost(headers)
+		obj["host"] = ws["host"].(string)
+		if headers, ok := ws["headers"].(map[string]interface{}); ok {
+			hostFromHeaders := searchHost(headers)
+			if hostFromHeaders != "" {
+				obj["host"] = hostFromHeaders
+			}
+		}
 	case "http":
 		obj["net"] = "h2"
 		http, _ := stream["httpSettings"].(map[string]interface{})
@@ -339,7 +348,13 @@ func (s *SubService) genVlessLink(inbound *model.Inbound, email string) string {
 		ws, _ := stream["wsSettings"].(map[string]interface{})
 		params["path"] = ws["path"].(string)
 		headers, _ := ws["headers"].(map[string]interface{})
-		params["host"] = searchHost(headers)
+		params["host"] = ws["host"].(string)
+		if headers != nil {
+			hostFromHeaders := searchHost(headers)
+			if hostFromHeaders != "" {
+				params["host"] = hostFromHeaders
+			}
+		}
 	case "http":
 		http, _ := stream["httpSettings"].(map[string]interface{})
 		params["path"] = http["path"].(string)
@@ -353,7 +368,7 @@ func (s *SubService) genVlessLink(inbound *model.Inbound, email string) string {
 	case "grpc":
 		grpc, _ := stream["grpcSettings"].(map[string]interface{})
 		params["serviceName"] = grpc["serviceName"].(string)
-		params["authority"] = grpc["authority"].(string)
+		params["authority"], _ = grpc["authority"].(string)
 		if grpc["multiMode"].(bool) {
 			params["mode"] = "multi"
 		}
@@ -556,7 +571,13 @@ func (s *SubService) genTrojanLink(inbound *model.Inbound, email string) string 
 		ws, _ := stream["wsSettings"].(map[string]interface{})
 		params["path"] = ws["path"].(string)
 		headers, _ := ws["headers"].(map[string]interface{})
-		params["host"] = searchHost(headers)
+		params["host"] = ws["host"].(string)
+		if headers != nil {
+			hostFromHeaders := searchHost(headers)
+			if hostFromHeaders != "" {
+				params["host"] = hostFromHeaders
+			}
+		}
 	case "http":
 		http, _ := stream["httpSettings"].(map[string]interface{})
 		params["path"] = http["path"].(string)
@@ -570,7 +591,7 @@ func (s *SubService) genTrojanLink(inbound *model.Inbound, email string) string 
 	case "grpc":
 		grpc, _ := stream["grpcSettings"].(map[string]interface{})
 		params["serviceName"] = grpc["serviceName"].(string)
-		params["authority"] = grpc["authority"].(string)
+		params["authority"], _ = grpc["authority"].(string)
 		if grpc["multiMode"].(bool) {
 			params["mode"] = "multi"
 		}
@@ -774,7 +795,13 @@ func (s *SubService) genShadowsocksLink(inbound *model.Inbound, email string) st
 		ws, _ := stream["wsSettings"].(map[string]interface{})
 		params["path"] = ws["path"].(string)
 		headers, _ := ws["headers"].(map[string]interface{})
-		params["host"] = searchHost(headers)
+		params["host"] = ws["host"].(string)
+		if headers != nil {
+			hostFromHeaders := searchHost(headers)
+			if hostFromHeaders != "" {
+				params["host"] = hostFromHeaders
+			}
+		}
 	case "http":
 		http, _ := stream["httpSettings"].(map[string]interface{})
 		params["path"] = http["path"].(string)
@@ -788,7 +815,7 @@ func (s *SubService) genShadowsocksLink(inbound *model.Inbound, email string) st
 	case "grpc":
 		grpc, _ := stream["grpcSettings"].(map[string]interface{})
 		params["serviceName"] = grpc["serviceName"].(string)
-		params["authority"] = grpc["authority"].(string)
+		params["authority"], _ = grpc["authority"].(string)
 		if grpc["multiMode"].(bool) {
 			params["mode"] = "multi"
 		}
