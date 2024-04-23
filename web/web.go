@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -210,7 +209,8 @@ func (s *Server) initRouter() (*gin.Engine, error) {
 			return nil, err
 		}
 		engine.LoadHTMLFiles(files...)
-		engine.StaticFS(basePath+"assets", http.FS(os.DirFS("web/assets")))
+		//engine.StaticFS(basePath+"assets", http.FS(os.DirFS("web/assets")))
+		engine.Static("/assets", filepath.Join(XuiHtml, "assets")) //新的方法
 	} else {
 		// for production
 		template, err := s.getHtmlTemplate(engine.FuncMap)
